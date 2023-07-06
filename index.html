@@ -1,0 +1,68 @@
+<body style="width: 800px;margin: 0 auto;background-color: black;">
+  <h1 style="text-align: center;color: #ededed;">Мессенджер</h1>
+  <pre id="messages" style="height: 700px; overflow: scroll; color: #ededed;border-radius: 10px;" ></pre>
+  <input type="text" id="messageBox" placeholder="Ваше сообщение" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;border-radius: 10px;" />
+  <button id="send" title="Отправить сообщение!" style="width: 100%; height: 50px;border-radius: 10px">ОТПРАВИТЬ</button>
+</body>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+  * {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-weight: 500;
+    
+  }
+</style>
+
+<script>
+  (function() {
+    const sendBtn = document.querySelector('#send');
+    const messages = document.querySelector('#messages');
+    const messageBox = document.querySelector('#messageBox');
+
+    let ws;
+
+    function showMessage(message) {
+      if (message instanceof Blob) {
+            message.text().then((text) => {
+              messages.textContent += `\n\n${text}`;
+              messages.scrollTop = messages.scrollHeight;
+              messageBox.value = '';
+        });
+      }
+      else {
+        messages.textContent += `\n\n${message}`;
+        messages.scrollTop = messages.scrollHeight;
+        messageBox.value = '';
+      }
+    }
+
+    function init() {
+      if (ws) {
+        ws.onerror = ws.onopen = ws.onclose = null;
+        ws.close();
+      }
+
+      ws = new WebSocket('ws://localhost:8080');
+      ws.onopen = () => {
+        console.log('Связь установлена!');
+      }
+    
+      ws.onmessage = ({ data }) => showMessage(data);
+      ws.onclose = function() {
+        ws = null;
+      }
+    }
+
+    sendBtn.onclick = function() {
+      if (!ws) {
+        showMessage("Абонент не в сети!");
+        return ;
+      }
+
+      ws.send(messageBox.value);
+      showMessage(messageBox.value);
+    }
+
+    init();
+  })();
+</script>
